@@ -1,0 +1,1 @@
+algorithm - a finite sequence of mathematically rigorous expression instructions, typically used to solve a class of specific problems or to perform a computation
