@@ -46,6 +46,8 @@ func getFiles(dir *string, fileNames []string) []string {
 			return nil
 		}
 
+		defer file.Close()
+		
 		scanner := bufio.NewScanner(file)
 
 		for scanner.Scan() {
