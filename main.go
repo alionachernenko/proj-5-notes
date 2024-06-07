@@ -5,29 +5,34 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 )
 
-func createWordsMap(fileContent string) (map[string][]int, []string) {
+func createWordsMap(fileContent []string) map[string][]int {
 	words := make(map[string][]int)
 
-	lines := strings.Split(strings.ToLower(fileContent), ".")
-
-	for i, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
+	for i, line := range fileContent {
+		normalizedLine := strings.ToLower(line)
+		trimmedLine := strings.TrimSpace(normalizedLine)
 
 		lineWords := strings.Fields(trimmedLine)
 
 		for _, word := range lineWords {
+			if slices.Contains(words[word], i) {
+				continue
+			}
+
 			words[word] = append(words[word], i)
 		}
 	}
 
-	return words, lines
+	fmt.Print(words)
+	return words
 }
 
 func getFile(dir *string) (*os.File, error) {
-	filePath := fmt.Sprintf("%v/note.txt", *dir)
+	filePath := fmt.Sprintf("%v/notes.txt", *dir)
 	file, err := os.Open(filePath)
 
 	if err != nil {
@@ -37,17 +42,19 @@ func getFile(dir *string) (*os.File, error) {
 	return file, nil
 }
 
-func getFileContent(file *os.File) string {
-	var fileContent string
+func getFileContent(file *os.File) []string {
+	var fileContent []string
 
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
-		fileContent = scanner.Text()
+		lines := scanner.Text()
+		fileContent = append(fileContent, lines)
 	}
 
 	return fileContent
 }
+
 
 func main() {
 	filesDirectory := flag.String("dir", "./notes", "files directory")
@@ -64,7 +71,7 @@ func main() {
 
 	fileContent := getFileContent(file)
 
-	words, lines := createWordsMap(fileContent)
+	words := createWordsMap(fileContent)
 
 	var input string
 
@@ -73,6 +80,7 @@ func main() {
 	fmt.Scan(&input)
 
 	results := words[strings.ToLower(input)]
+	fmt.Print(results)
 
 	if len(results) == 0 {
 		fmt.Print("Nothing was found :(")
@@ -80,6 +88,6 @@ func main() {
 	}
 
 	for _, lineIdx := range results {
-		fmt.Println(lines[lineIdx])
+		fmt.Println(fileContent[lineIdx])
 	}
 }
