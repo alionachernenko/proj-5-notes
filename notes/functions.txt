@@ -1,1 +1,0 @@
-function - an expression, rule, or law that defines a relationship between one variable (the independent variable) and another variable (the dependent variable).

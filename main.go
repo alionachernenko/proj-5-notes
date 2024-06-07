@@ -8,53 +8,78 @@ import (
 	"strings"
 )
 
-func main() {
-	filesDirectory := flag.String("dir", "./notes", "files directory")
+func createWordsMap(fileContent string) (map[string][]int, []string) {
+	words := make(map[string][]int)
 
-	words := map[string][]string{
-		"expression": {"functions.txt"},
-		"variable":   {"functions.txt"},
-		"sequence":   {"algorithms.txt"},
+	lines := strings.Split(strings.ToLower(fileContent), ".")
+
+	for i, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+
+		lineWords := strings.Fields(trimmedLine)
+
+		for _, word := range lineWords {
+			words[word] = append(words[word], i)
+		}
 	}
 
-	var searchInput string
+	return words, lines
+}
 
-	fmt.Scan(&searchInput)
+func getFile(dir *string) (*os.File, error) {
+	filePath := fmt.Sprintf("%v/note.txt", *dir)
+	file, err := os.Open(filePath)
 
-	files := getFiles(filesDirectory, words[strings.ToLower(searchInput)])
+	if err != nil {
+		return nil, err
+	}
 
-	if len(files) == 0 {
-		fmt.Println("Nothing was found :(")
+	return file, nil
+}
+
+func getFileContent(file *os.File) string {
+	var fileContent string
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		fileContent = scanner.Text()
+	}
+
+	return fileContent
+}
+
+func main() {
+	filesDirectory := flag.String("dir", "./notes", "files directory")
+	flag.Parse()
+
+	file, err := getFile(filesDirectory)
+
+	if err != nil {
+		fmt.Printf("Error reading file: %v\n", err)
 		return
 	}
 
-	fmt.Println("Results:")
+	defer file.Close()
 
-	for _, file := range files {
-		fmt.Println(file)
+	fileContent := getFileContent(file)
+
+	words, lines := createWordsMap(fileContent)
+
+	var input string
+
+	fmt.Print("Enter word to search: ")
+
+	fmt.Scan(&input)
+
+	results := words[strings.ToLower(input)]
+
+	if len(results) == 0 {
+		fmt.Print("Nothing was found :(")
+		return
 	}
-}
 
-func getFiles(dir *string, fileNames []string) []string {
-	var files []string
-
-	for _, fileName := range fileNames {
-		file, err := os.Open(fmt.Sprintf("%v/%v", *dir, fileName))
-
-		if err != nil {
-			fmt.Printf("Error opening file %v: %v", fileName, err)
-			return nil
-		}
-
-		defer file.Close()
-		
-		scanner := bufio.NewScanner(file)
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			files = append(files, line)
-		}
+	for _, lineIdx := range results {
+		fmt.Println(lines[lineIdx])
 	}
-	
-	return files
 }
